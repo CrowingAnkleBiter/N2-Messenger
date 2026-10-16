@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>N² Jumping Madness - Cinematic Hyperrealistic Islands</title>
+<style>
+:root {
+  --cyan:#55f4ff;
+  --blue:#168cff;
+  --panel:rgba(2, 10, 28, 0.9);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;padding:12px;color:#effaff;
+  font:14px/1.45 system-ui,Arial,sans-serif;
+  background:#020712;
+}
+button{
+  color:white;font:inherit;font-weight:800;cursor:pointer;
+  padding:10px 14px;border:1px solid var(--blue);border-radius:10px;
+  background:linear-gradient(145deg,#124c92,#061636);
+  backdrop-filter:blur(8px);
+}
+button:hover{filter:brightness(1.2)}
+button:focus-visible{outline:2px solid white;outline-offset:3px}
+.topbar,.panel,.game{
+  border:1px solid rgba(22, 140, 255, 0.4);border-radius:16px;
+  background:var(--panel);box-shadow:0 8px 32px rgba(0,0,0,0.6);
+  backdrop-filter:blur(12px);
+}
+.topbar{display:flex;justify-content:space-between;gap:8px;padding:12px 18px;color:var(--cyan);font-weight:900}
+.layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(250px,.8fr);gap:12px;margin-top:12px}
+.intro{min-width:0;padding:16px}
+.hero{
+  min-height:245px;position:relative;overflow:hidden;border-radius:14px;padding:20px;
+  background:radial-gradient(ellipse at 80% 30%,#00aaff44,transparent 60%),
+  linear-gradient(130deg,#02081d,#081b3e 60%,#010512);
+  border:1px solid rgba(85,244,255,0.2);
+}
+.kicker{color:var(--cyan);font-size:12px;font-weight:900;letter-spacing:1.5px}
+.logo{margin:12px 0;font-size:clamp(38px,4.8vw,64px);font-weight:1000;font-style:italic;line-height:.85;text-shadow:0 0 25px rgba(32,223,255,0.6)}
+.logo span{color:#59f8ff}
+.logo small{display:block;margin-top:8px;font-size:.5em;letter-spacing:0}
+.hero p{max-width:65%;color:#d9efff}
+#heroCanvas{position:absolute;right:2%;top:10px;width:36%;height:195px}
+.settings{margin-top:12px;padding:16px;border:1px solid rgba(22, 140, 255, 0.4);border-radius:14px;background:rgba(2, 9, 25, 0.9)}
+.settings h2,.help h2{margin:0;color:var(--cyan);font-size:18px}
+.sub{margin:4px 0 12px;color:#a9d9ff;font-size:12px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.count{min-width:55px;text-align:center;padding:8px;font-size:21px;font-weight:900;border:1px solid var(--blue);border-radius:8px;background:rgba(0,0,0,0.4)}
+.start{margin-left:auto;min-width:160px;background:linear-gradient(100deg,#076bff,#4227ff,#a32aff);font-size:17px}
+.help{padding:18px}
+.help h2{margin-bottom:14px}
+.rule{display:grid;grid-template-columns:35px 1fr;gap:9px;margin:14px 0}
+.ico{font-size:24px;text-align:center;color:var(--cyan)}
+.rule b{color:var(--cyan)}
+.rule p{margin:2px 0;color:#b9dcff;font-size:12px}
+.game{overflow:hidden;min-width:0}
+.game.hidden{display:none}
+.hud{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid rgba(22, 140, 255, 0.3);background:rgba(3,11,30,0.9)}
+.pill{padding:8px 12px;border:1px solid rgba(18, 111, 203, 0.6);border-radius:10px;background:rgba(4,20,50,0.8);font-weight:800;backdrop-filter:blur(6px)}
+.pill strong{color:var(--cyan)}
+.push{flex:1}
+.stage{position:relative;overflow:hidden;background:#030d1f}
+#world{display:block;width:100%;height:clamp(420px,54vw,620px)}
+#banner{position:absolute;top:15px;left:50%;transform:translateX(-50%);max-width:90%;text-align:center;color:white;font-size:clamp(15px,2.4vw,25px);font-weight:1000;text-shadow:0 2px 10px #000,0 0 20px #20eaff;pointer-events:none}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;padding:15px;background:rgba(1,8,25,0.85);backdrop-filter:blur(8px)}
+.overlay.hidden{display:none}
+.overlay-card{width:min(440px,100%);padding:24px;text-align:center;border:1px solid #35ddff;border-radius:16px;background:rgba(3,19,55,0.95);box-shadow:0 0 40px rgba(53,221,255,0.3)}
+.overlay-card h2{margin:0;color:var(--cyan);font-size:30px}
+.overlay-card p{color:#c4e5ff}
+.controls{position:absolute;left:12px;right:12px;bottom:12px;display:flex;justify-content:space-between;align-items:end;gap:8px;pointer-events:none}
+.hint,.gamebuttons{pointer-events:auto}
+.hint{max-width:54%;padding:10px;background:rgba(1,11,37,0.85);border:1px solid rgba(22,140,255,0.5);border-radius:10px;color:#bde9ff;font-size:11px;backdrop-filter:blur(6px)}
+.gamebuttons{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.gamebuttons button{padding:10px 14px}
+.jump{min-width:76px;min-height:65px;border-radius:40px;background:radial-gradient(circle at 35% 25%,#54caff,#3021e8 70%);border:2px solid #b0faff;box-shadow:0 0 25px rgba(22,125,255,0.8)}
+.statusline{padding:10px 14px;background:rgba(2,9,24,0.95);color:#a8d9ff;font-size:12px;border-top:1px solid rgba(11,78,145,0.5);display:flex;justify-content:space-between;align-items:center}
+.statusline strong{color:var(--cyan)}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.help{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.help h2{grid-column:1/-1}}
+@media(max-width:560px){
+  body{padding:7px}.hero p{max-width:65%}.start{width:100%;margin:4px 0 0}
+  .help{display:block}#world{height:490px}
+  .controls{flex-direction:column;align-items:stretch}
+  .hint{display:none!important}
+  #world{touch-action:none}
+  .stage{touch-action:pan-y}
+  .gamebuttons{justify-content:flex-end}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <span>✦ N² GAME LAB</span>
+  <span>JUMPING MADNESS · CINEMATIC ISLANDS EDITION</span>
+</header>
+
+<section class="layout" id="layout">
+  <main class="panel intro" id="intro">
+    <section class="hero" id="hero">
+      <div class="kicker">AN EPIC CINEMATIC EXPERIENCE</div>
+      <div class="logo"><span>N²</span> JUMPING<small>MADNESS</small></div>
+      <div class="kicker">BOUNCE BEYOND THE IMPOSSIBLE</div>
+      <p>Stap in een filmische wereld van zwevende rotseilanden, watervallen en meedogenloze Elite AI.</p>
+      <canvas id="heroCanvas" width="260" height="200"></canvas>
+    </section>
+
+    <section class="settings" id="settings">
+      <h2>Stel je arena samen</h2>
+      <p class="sub">Kies het aantal bots. Versla ze en blijf daarna eindeloos klimmen!</p>
+      <p class="sub">Multiplayer via Game Hub: open dezelfde game op een andere N²-node; de game wisselt spelersstatus uit via de N²Game-bridge als die nodekoppeling beschikbaar is.</p>
+      <div class="row">
+        <button id="minus" aria-label="Minder bots">−</button>
+        <div class="count" id="count">10</div>
+        <button id="plus" aria-label="Meer bots">＋</button>
+        <span>/ 50 bots</span>
+        <button class="start" id="start">▶ Spelen</button>
+      </div>
+    </section>
+
+    <section class="game hidden" id="game">
+      <div class="hud">
+        <div class="pill">Spelers: <strong id="nodes">11</strong></div>
+        <div class="pill">Bots: <strong id="botHud">10</strong></div>
+        <div class="pill">Levens: <strong id="lives">3</strong></div>
+        <div class="push"></div>
+        <div class="pill">Tijd: <strong id="clock">00:00</strong></div>
+        <div class="pill">Hoogte: <strong id="altitude">0 m</strong></div>
+        <div class="pill">Punten: <strong id="score">0</strong></div>
+        <div class="pill">Record: <strong id="highScore">0</strong></div>
+      </div>
+      <div class="stage">
+        <canvas id="world" width="1280" height="600"></canvas>
+        <div id="banner"></div>
+        <div class="overlay hidden" id="overlay"></div>
+        <div class="controls">
+          <div class="hint">← → / A D bewegen · Pijltje Omhoog of Spatie = Balans Jump</div>
+          <div class="gamebuttons">
+            <button id="left">←</button>
+            <button id="right">→</button>
+            <button id="pause">Pauze</button>
+            <button id="back">Menu</button>
+            <button class="jump" id="jump">JUMP<br>+ DOUBLE</button>
+          </div>
+        </div>
+      </div>
+      <div class="statusline">
+        <span>Wereld: <strong id="worldName">Hemelse Eilanden</strong> · <span id="worldHint">Blijf binnen het frame!</span></span>
+        <span id="netStatus">Multiplayer: wacht op andere N²-nodes</span>
+      </div>
+    </section>
+  </main>
+
+  <aside class="panel help" id="help">
+    <h2>✦ Hoe overleef je?</h2>
+    <div class="rule"><div class="ico">↥</div><div><b>Balanced Jump</b><p>Fijner afgestemde spronghoogte voor optimale controle.</p></div></div>
+    <div class="rule"><div class="ico">⚡</div><div><b>Elite AI Bots</b><p>Kijk uit: deze bots maken gebruik van pro-level berekeningen.</p></div></div>
+    <div class="rule"><div class="ico">☠</div><div><b>Buiten beeld = Af</b><p>Val niet onder het meedogenloos stijgende scherm.</p></div></div>
+    <div class="rule"><div class="ico">🏆</div><div><b>WINNER!</b><p>Overleef als enige speler om de overwinning te claimen.</p></div></div>
+    <div class="rule"><div class="ico">♥</div><div><b>Drie levens</b><p>Behoud je focus tot de top.</p></div></div>
+  </aside>
+</section>
+
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+"use strict";
+const $=id=>document.getElementById(id);
+const canvas=$("world"),ctx=canvas.getContext("2d");
+const hero=$("heroCanvas"),hx=hero.getContext("2d");
+const W=canvas.width,H=canvas.height;
+const rand=(a,b)=>a+Math.random()*(b-a);
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+    this.beginPath();this.moveTo(x+r,y);
+    this.lineTo(x+w-r,y);this.quadraticCurveTo(x+w,y,x+w,y+r);
+    this.lineTo(x+w,y+h-r);this.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    this.lineTo(x+r,y+h);this.quadraticCurveTo(x,y+h,x,y+h-r);
+    this.lineTo(x,y+r);this.quadraticCurveTo(x,y,x+r,y);
+    this.closePath();return this;
+  };
+}
+
+const THEMES=[
+  ["1. Hemelse Eilanden","#031535","#103b6e","#55f4ff","Zwevende rotseilanden en kristalheldere watervallen."],
+  ["2. Oceaan Diepte","#021b36","#006b8c","#59ffed","Diepzeewereld met bioluminescente flora."],
+  ["3. Gouden Woestijn","#4a2010","#b5632a","#ffd27a","Brandende rotsen en gouden duinen."],
+  ["4. Neon Cyberstad","#0b0626","#4b179e","#ff59e8","Cyberpunk hemelstad vol licht."],
+  ["5. Kristalrijk","#082442","#398fb3","#d6ffff","Bevroren gletsjers en glinsterende mist."],
+  ["6. Kosmische Nevel","#040217","#31177a","#e2a8ff","Diepe kosmos met planeten en sterren."],
+  ["7. Vuurtempel","#2b050a","#ad2611","#ffbe42","Kokende lava en antieke altaren."]
+];
+
+let theme=0,botCount=10,active=false,paused=false,elapsed=0,last=0;
+let camera=0,blobs=[],platforms=[],particles=[],keys={};
+let player=null,worldHeight=0,highestUnlockedTheme=0,themeNotice=0;
+let score=0, highScore=0, lastScoreLevel=0, lastNetSend=0, remotePlayers=new Map();
+try { highScore=Number(localStorage.getItem('n2JumpingMadnessHighScore')||0)||0; } catch(_) {}
+const multiplayerId='jm-'+Math.random().toString(36).slice(2,10);
+function updateScore(points){ score+=points; if(score>highScore){highScore=score;try{localStorage.setItem('n2JumpingMadnessHighScore',String(highScore));}catch(_){}} const a=$('score'),b=$('highScore');if(a)a.textContent=score.toLocaleString();if(b)b.textContent=highScore.toLocaleString(); }
+function sendNetState(){
+  if(!window.N2Game||!player||!active)return;
+  try{window.N2Game.send({type:'jumping-madness-state',game:'N2_JUMPING_MADNESS',playerId:multiplayerId,name:'Node '+multiplayerId.slice(-4),x:player.x,y:player.y,camera,score,worldHeight,alive:player.alive,color:player.color});}catch(_){}
+}
+if(window.N2Game&&typeof window.N2Game.onMessage==='function'){
+  window.N2Game.onMessage((data,from)=>{
+    if(data&&data.type==='jumping-madness-start'&&data.game==='N2_JUMPING_MADNESS'){ if(!active) resetGame(); if($('netStatus'))$('netStatus').textContent='Multiplayer: startsein ontvangen'; return; }
+    if(!data||data.type!=='jumping-madness-state'||data.game!=='N2_JUMPING_MADNESS'||data.playerId===multiplayerId)return;
+    remotePlayers.set(String(data.playerId),{...data,seen:performance.now(),from});
+    if($('netStatus'))$('netStatus').textContent='Andere nodes: '+remotePlayers.size;
+  });
+}
+
+function setTheme(i,announce=true){
+  theme=clamp(i,0,THEMES.length-1);
+  $("worldName").textContent=THEMES[theme][0];
+  $("worldHint").textContent=THEMES[theme][4];
+  if(announce){
+    $("banner").textContent="WERELD ONTDEKT · "+THEMES[theme][0].toUpperCase();
+    themeNotice=3;
+  }
+}
+
+function newBlob(x,y,id,isPlayer=false){
+  return {
+    x,y,vx:rand(-45,45),vy:0,r:22,
+    color:isPlayer?"#35edff":`hsl(${id*61%360} 92% 58%)`,
+    id,isPlayer,alive:true,lives:isPlayer?3:1,
+    first:true,jumpsUsed:0,respawn:0,think:rand(.04,.15),
+    targetX:x,targetY:y,phase:rand(0,6),dentX:0,dentY:0,landSquash:0
+  };
+}
+
+function makePlatform(x,y,w){
+  const tr=Math.random();
+  let type="still";
+  if(tr<0.26) type="moving";
+  else if(tr<0.46) type="tilting";
+  else if(tr<0.58) type="bouncy";
+
+  return {
+    x,y,w,h:26,baseX:x,baseY:y,
+    type,phase:rand(0,6),speed:rand(0.7,1.7),
+    angle:0,tiltSpeed:rand(1,2.8)
+  };
+}
+
+function burst(x,y,color,count=14){
+  for(let i=0;i<count;i++) particles.push({
+    x,y,vx:rand(-220,220),vy:rand(-240,60),
+    life:rand(.5,1),max:1,color,size:rand(2.5,6),
+    rot:rand(0,Math.PI*2),vRot:rand(-6,6)
+  });
+}
+
+function jump(b,first=false){
+  if(!b||!b.alive||b.jumpsUsed>=2)return;
+  const powerVelocity = b.isPlayer ? 1120 : 1260;
+  if(first) b.vy=-powerVelocity/Math.sqrt(2);
+  else b.vy=-(b.jumpsUsed===0?powerVelocity:powerVelocity*.9);
+  b.jumpsUsed++;
+  b.first=false;
+  b.landSquash=.85;
+  burst(b.x,b.y,b.color,b.jumpsUsed===2?20:12);
+}
+
+function resetGame(){
+  elapsed=0;camera=0;worldHeight=0;highestUnlockedTheme=0;themeNotice=0;score=0;lastScoreLevel=0;remotePlayers.clear();
+  particles=[];blobs=[];platforms=[];
+  setTheme(0,false);
+
+  player=newBlob(W*.5,H-95,0,true);
+  blobs.push(player);
+  for(let i=0;i<botCount;i++) blobs.push(
+    newBlob(rand(55,W-55),H-100-rand(0,65),i+1)
+  );
+  for(let i=0;i<18;i++) platforms.push(makePlatform(
+    rand(15,W-195),H-18-i*94,rand(130,210)
+  ));
+
+  $("hero").style.display="none";
+  $("settings").style.display="none";
+  $("help").style.display="none";
+  $("game").classList.remove("hidden");
+  $("overlay").classList.add("hidden");
+  $("layout").style.gridTemplateColumns="minmax(0,1fr)";
+
+  active=true;paused=false;
+  $("pause").textContent="Pauze";
+  $("botHud").textContent=botCount;
+  $("nodes").textContent=blobs.length;
+  $("lives").textContent=player.lives;
+  $("clock").textContent="00:00";
+  $("altitude").textContent="0 m";$("score").textContent="0";$("highScore").textContent=highScore.toLocaleString();if($("netStatus"))$("netStatus").textContent="Multiplayer: wacht op andere N²-nodes";
+  $("banner").textContent="";
+
+  for(const b of blobs) jump(b,true);
+}
+
+function showMenu(){
+  active=false;paused=false;
+  $("game").classList.add("hidden");
+  $("hero").style.display="";
+  $("settings").style.display="";
+  $("help").style.display="";
+  $("layout").style.gridTemplateColumns="";
+}
+
+function endGame(isWinner=false){
+  active=false;
+  if(score>highScore){highScore=score;try{localStorage.setItem('n2JumpingMadnessHighScore',String(highScore));}catch(_){}}
+  $('highScore').textContent=highScore.toLocaleString();
+  $('overlay').classList.remove('hidden');
+  $('overlay').innerHTML='<div class="overlay-card"><h2 style="color:#55f4ff">RUN VOORBIJ</h2>'+
+    '<p>Je run eindigde in wereld: '+THEMES[theme][0]+'.</p><p>Score: <strong>'+score.toLocaleString()+'</strong> · Record: <strong>'+highScore.toLocaleString()+'</strong></p>'+
+    '<p>Je kunt opnieuw beginnen en je record proberen te verbeteren.</p><button id="again">↻ Opnieuw spelen</button> <button id="toMenu">Menu</button></div>';
+  $('again').onclick=resetGame;$('toMenu').onclick=showMenu;
+}
+
+function collideBlobs(){
+  for(let i=0;i<blobs.length;i++){
+    const a=blobs[i];if(!a.alive)continue;
+    for(let j=i+1;j<blobs.length;j++){
+      const b=blobs[j];if(!b.alive)continue;
+      const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.001;
+      const overlap=a.r+b.r-d;
+      if(overlap<=0)continue;
+      const nx=dx/d,ny=dy/d;
+      a.x-=nx*overlap*.5;b.x+=nx*overlap*.5;
+      a.y-=ny*overlap*.5;b.y+=ny*overlap*.5;
+      const rel=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+      if(rel<0){
+        const impulse=-rel*.75;
+        a.vx-=impulse*nx;b.vx+=impulse*nx;
+        a.vy-=impulse*ny;b.vy+=impulse*ny;
+        a.vx-=nx*40;b.vx+=nx*40;
+        a.vy-=ny*30;b.vy+=ny*30;
+        a.landSquash=.5;b.landSquash=.5;
+      }
+      a.dentX=-nx*6;b.dentX=nx*6;
+      a.dentY=-ny*5;b.dentY=ny*5;
+    }
+  }
+}
+
+function updateThemeByAltitude(){
+  if(!player)return;
+  const altitude=Math.max(0,Math.floor(-camera/140));
+  worldHeight=Math.max(worldHeight,altitude);
+  const reached=Math.floor(worldHeight);
+  if(reached>lastScoreLevel){updateScore((reached-lastScoreLevel)*100);lastScoreLevel=reached;}
+  const next=Math.min(THEMES.length-1,Math.floor(worldHeight/5));
+  if(next>highestUnlockedTheme){
+    highestUnlockedTheme=next;setTheme(next,true);
+  }
+  $("altitude").textContent=Math.round(worldHeight*25)+" m";
+}
+
+function update(dt){
+  if(!active||paused)return;
+  elapsed+=dt;
+  if(themeNotice>0&&((themeNotice-=dt)<=0))$("banner").textContent="";
+
+  for(const p of platforms){
+    if(p.type==="moving"){
+      p.x=clamp(p.baseX+Math.sin(elapsed*p.speed+p.phase)*85,10,W-p.w-10);
+    }else if(p.type==="tilting"){
+      p.angle=Math.sin(elapsed*p.tiltSpeed+p.phase)*0.25;
+    }
+  }
+
+  for(const b of blobs){
+    if(!b.alive)continue;
+
+    b.vy+=980*dt;b.vx*=Math.pow(.985,dt*60);
+    b.vx=clamp(b.vx,-430,430);b.vy=clamp(b.vy,-1500,1500);
+
+    if(b.isPlayer){
+      const dir=(keys.right||keys.ArrowRight||keys.d||keys.D?1:0)-
+                (keys.left||keys.ArrowLeft||keys.a||keys.A?1:0);
+      b.vx+=dir*820*dt;
+    }else{
+      b.think-=dt;
+      if(b.think<=0){
+        b.think=rand(.04,.12);
+        const possible=platforms.filter(p=>p.y<b.y+110&&p.y>b.y-380);
+        possible.sort((p,q)=>{
+          const scoreP = (b.y - p.y) - Math.abs((p.x + p.w/2) - b.x) * 0.3;
+          const scoreQ = (b.y - q.y) - Math.abs((q.x + q.w/2) - b.x) * 0.3;
+          return scoreQ - scoreP;
+        });
+        if(possible.length){
+          const targetPlat = possible[0];
+          let targetX = targetPlat.x + targetPlat.w/2;
+          if(targetPlat.type==="moving"){
+            targetX += Math.sin(elapsed * targetPlat.speed + targetPlat.phase) * 30;
+          }
+          b.targetX = clamp(targetX + rand(-6, 6), 15, W-15);
+        }
+      }
+
+      const steering = Math.sign(b.targetX - b.x);
+      b.vx += steering * 580 * dt;
+
+      if(b.vy > 25 && b.jumpsUsed === 1){
+        const safeZone = platforms.some(p => p.y > b.y && p.y < b.y + 180 && b.x > p.x - 5 && b.x < p.x + p.w + 5);
+        if(!safeZone || Math.random() < 0.08){
+          jump(b, false);
+        }
+      }
+    }
+
+    const oldY=b.y;
+    b.x+=b.vx*dt;b.y+=b.vy*dt;
+    if(b.x<b.r){b.x=b.r;b.vx=Math.abs(b.vx)*.75;}
+    if(b.x>W-b.r){b.x=W-b.r;b.vx=-Math.abs(b.vx)*.75;}
+
+    for(const p of platforms){
+      const crossed=oldY+b.r<=p.y+6&&b.y+b.r>=p.y;
+      if(b.vy>0&&crossed&&b.x+b.r>p.x&&b.x-b.r<p.x+p.w){
+        b.y=p.y-b.r;
+        b.jumpsUsed=0;
+        b.landSquash=1;
+        if(p.type==="tilting"){
+          b.vx+=p.angle*280;
+        }
+        if(p.type==="bouncy"){
+          b.vy=-1400;
+          burst(b.x,b.y,"#55f4ff",12);
+        }else{
+          jump(b,true);
+        }
+        break;
+      }
+    }
+
+    if(b.y > camera + H + 25){
+      b.alive = false;
+      if(b.isPlayer){
+        endGame(false);
+      }
+    }
+
+    b.landSquash=Math.max(0,b.landSquash-dt*3.5);
+  }
+
+  collideBlobs();
+
+  camera -= 35 * dt;
+  if(player && player.alive){
+    if(player.y - H * 0.38 < camera){
+      camera = player.y - H * 0.38;
+    }
+  }
+
+  const living=blobs.filter(b=>b.alive);
+  const livingBots=living.filter(b=>!b.isPlayer);
+  // Na het verslaan van de laatste bot blijft de speler oneindig verder klimmen.
+  // De run eindigt alleen wanneer de speler afgaat.
+
+  const highest=platforms.length?Math.min(...platforms.map(p=>p.y)):camera;
+  if(highest>camera-160){
+    platforms.push(makePlatform(rand(15,W-195),highest-90,rand(130,210)));
+  }
+  platforms=platforms.filter(p=>p.y<camera+H+150);
+
+  for(const p of particles){
+    p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=180*dt;p.life-=dt;p.rot+=p.vRot*dt;
+  }
+  particles=particles.filter(p=>p.life>0);
+  updateThemeByAltitude();
+
+  if(elapsed-lastNetSend>.12){lastNetSend=elapsed;sendNetState();}
+  for(const [id,r] of remotePlayers){if(performance.now()-r.seen>6000)remotePlayers.delete(id);}
+  $("clock").textContent=String(Math.floor(elapsed/60)).padStart(2,"0")+":"+
+    String(Math.floor(elapsed%60)).padStart(2,"0");
+  $("nodes").textContent=living.length+remotePlayers.size;
+  $("lives").textContent=player.lives;
+}
+
+function drawBackground(){
+  const t=THEMES[theme];
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,t[1]);g.addColorStop(1,t[2]);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+  const glow=ctx.createRadialGradient(W*.7,H*.3,10,W*.7,H*.3,W*.9);
+  glow.addColorStop(0,"rgba(255, 210, 120, 0.35)");
+  glow.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
+
+  for(let layer=0;layer<3;layer++){
+    ctx.fillStyle=["rgba(3, 18, 45, 0.45)","rgba(2, 12, 32, 0.7)","rgba(1, 7, 20, 0.92)"][layer];
+    ctx.beginPath();ctx.moveTo(0,H);
+    for(let x=0;x<=W+30;x+=30){
+      const y=H*(.38+layer*.15)+
+        Math.sin(x*.006+layer*3+elapsed*(.08+layer*.03))*55+
+        Math.cos(x*.015)*20;
+      ctx.lineTo(x,y);
+    }
+    ctx.lineTo(W,H);ctx.fill();
+  }
+
+  for(let i=0;i<70;i++){
+    const x=(i*173+Math.sin(elapsed*.2+i)*18+W*3)%W;
+    const y=(i*97-elapsed*(8+i%4)+H*20)%H;
+    ctx.globalAlpha=.3+(i%4)*.15;
+    ctx.fillStyle=i%4===0?"#ffffff":t[3];
+    ctx.beginPath();ctx.arc(x,y,1+(i%3)*.7,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  const vignette=ctx.createRadialGradient(W*.5,H*.48,H*.25,W*.5,H*.48,H*.9);
+  vignette.addColorStop(0,"rgba(0,0,0,0)");vignette.addColorStop(1,"rgba(1,5,15,0.75)");
+  ctx.fillStyle=vignette;ctx.fillRect(0,0,W,H);
+}
+
+// Hyperrealistisch getekend zwevend rotseiland met gedetailleerde moslaag, rotsranden en vegetatie-accenten
+function drawPlatform(p){
+  const y=p.y-camera;if(y<-70||y>H+70)return;
+  ctx.save();
+  ctx.translate(p.x+p.w/2,y+p.h/2);
+  ctx.rotate(p.angle);
+
+  // Zachte schaduw onder het eiland
+  ctx.shadowColor="rgba(0,0,0,0.9)";ctx.shadowBlur=24;ctx.shadowOffsetY=12;
+
+  // Rotsstructuur met hangende bodem
+  ctx.beginPath();
+  ctx.moveTo(-p.w/2, -p.h/2);
+  ctx.lineTo(p.w/2, -p.h/2);
+  ctx.lineTo(p.w/2 * 0.75, p.h * 1.4);
+  ctx.lineTo(p.w/2 * 0.2, p.h * 2.2);
+  ctx.lineTo(-p.w/2 * 0.35, p.h * 1.8);
+  ctx.lineTo(-p.w/2 * 0.85, p.h * 1.1);
+  ctx.closePath();
+
+  const rockGrad=ctx.createLinearGradient(0,-p.h/2,0,p.h*2);
+  rockGrad.addColorStop(0,"#467a53"); // helder mosgroen
+  rockGrad.addColorStop(0.18,"#2d4a34");
+  rockGrad.addColorStop(0.45,"#233142"); // rotslaag
+  rockGrad.addColorStop(1,"#080e17"); // diepe rotswortels
+  ctx.fillStyle=rockGrad;
+  ctx.fill();
+
+  ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+
+  // Gedetailleerde grassprieten en moslaag bovenop
+  ctx.fillStyle="#5eff99";
+  for(let i = -p.w/2 + 6; i < p.w/2 - 6; i += 10){
+    ctx.fillRect(i, -p.h/2 - 4, 5, 5);
+  }
+  ctx.fillStyle="#ffffff44";
+  ctx.fillRect(-p.w/2 + 10, -p.h/2 - 2, p.w - 20, 2);
+
+  if(p.type==="tilting"){
+    ctx.fillStyle="#ff4444";ctx.fillRect(-6,-4,12,8);
+  }else if(p.type==="bouncy"){
+    ctx.fillStyle="#55f4ff";ctx.fillRect(-p.w/3,-4,p.w/1.5,6);
+  }
+
+  ctx.restore();
+}
+
+function drawBlob(b){
+  const y=b.y-camera;if(y<-90||y>H+90)return;
+  const t=THEMES[(theme+b.id*3)%THEMES.length];
+  ctx.save();ctx.translate(b.x,y);
+  ctx.scale(1+b.landSquash*.15,1-b.landSquash*.16);
+  const r=b.r;
+
+  ctx.shadowColor=b.color;ctx.shadowBlur=30;
+  const grad=ctx.createRadialGradient(-r*.38,-r*.48,2,r*.15,r*.18,r*1.6);
+  grad.addColorStop(0,"#ffffff");
+  grad.addColorStop(0.25,b.color);
+  grad.addColorStop(0.7,t[3]);
+  grad.addColorStop(1,"#020718");
+
+  ctx.fillStyle=grad;ctx.beginPath();
+  for(let i=0;i<=64;i++){
+    const a=i/64*Math.PI*2;
+    const rr=r+Math.sin(a*3+elapsed*3+b.phase)*1.5+
+      (Math.abs(Math.cos(a))>.7?b.dentX*Math.cos(a):0)+
+      (Math.abs(Math.sin(a))>.7?b.dentY*Math.sin(a):0);
+    if(i===0)ctx.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);
+    else ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr);
+  }
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle="rgba(255,255,255,0.85)";ctx.lineWidth=2;ctx.stroke();
+  ctx.shadowBlur=0;
+
+  ctx.globalAlpha=.85;ctx.fillStyle="#fff";
+  ctx.beginPath();ctx.ellipse(-r*.32,-r*.48,r*.26,r*.12,-.55,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=1;
+
+  const s=r*1.22;
+  ctx.fillStyle="#030b1e";
+  ctx.beginPath();ctx.ellipse(-r*.22,-r*.04,r*.135,r*.2,-.08,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(r*.22,-r*.04,r*.135,r*.2,.08,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#fff";
+  ctx.beginPath();ctx.arc(-r*.25,-r*.12,2.8,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(r*.19,-r*.12,2.8,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle="#030b1e";ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.arc(0,r*.13,r*.22,.15,Math.PI-.15);ctx.stroke();
+
+  if(b.isPlayer){
+    ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 16px system-ui";
+    ctx.shadowColor="#000";ctx.shadowBlur=10;ctx.fillText("JIJ",0,-r-22);
+  }
+  ctx.restore();b.dentX*=.85;b.dentY*=.85;
+}
+
+function render(){
+  drawBackground();
+  for(const p of platforms)drawPlatform(p);
+  for(const p of particles){
+    ctx.save();
+    ctx.translate(p.x,p.y-camera);
+    ctx.rotate(p.rot);
+    ctx.globalAlpha=clamp(p.life/p.max,0,1);
+    ctx.fillStyle=p.color;
+    ctx.shadowColor=p.color;ctx.shadowBlur=15;
+    ctx.fillRect(-p.size,-p.size,p.size*2,p.size*2);
+    ctx.restore();
+  }
+  ctx.globalAlpha=1;
+  for(const b of blobs)if(b.alive)drawBlob(b);
+  // Andere nodes worden als ghost-speler getoond; dit is een netwerk-overzicht, geen gedeelde fysica.
+  for(const r of remotePlayers.values()){
+    if(!r.alive)continue;
+    const y=(Number(r.y)||0)-(Number(r.camera)||camera);
+    if(y<-50||y>H+50)continue;
+    ctx.save();ctx.globalAlpha=.72;ctx.strokeStyle='#ffdf72';ctx.lineWidth=3;ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.arc(clamp(Number(r.x)||W/2,20,W-20),y,25,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#fff0b0';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText('NODE',clamp(Number(r.x)||W/2,35,W-35),y-34);ctx.restore();
+  }
+
+  if(paused){
+    ctx.fillStyle="rgba(1,6,21,0.85)";ctx.fillRect(0,0,W,H);
+    ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 48px system-ui";
+    ctx.fillText("PAUZE",W/2,H/2);
+  }
+}
+
+function drawHero(){
+  hx.clearRect(0,0,hero.width,hero.height);
+  const glow=hx.createRadialGradient(130,90,4,130,90,110);
+  glow.addColorStop(0,"rgba(85,244,255,0.4)");glow.addColorStop(1,"rgba(5,19,51,0)");
+  hx.fillStyle=glow;hx.fillRect(0,0,260,200);
+  const x=130,y=96,r=58+Math.sin(performance.now()*.002)*2;
+  hx.save();hx.translate(x,y);hx.shadowColor="#55f4ff";hx.shadowBlur=35;
+  const g=hx.createRadialGradient(-20,-25,2,5,5,90);
+  g.addColorStop(0,"#fff");g.addColorStop(.15,"#7ffaff");
+  g.addColorStop(.5,"#00aaff");g.addColorStop(1,"#1223aa");
+  hx.fillStyle=g;hx.beginPath();hx.arc(0,0,r,0,Math.PI*2);hx.fill();
+  hx.shadowBlur=0;hx.fillStyle="#0872db";
+  hx.beginPath();hx.roundRect(-34,-34,68,68,10);hx.fill();
+  hx.fillStyle="#03122e";
+  hx.beginPath();hx.ellipse(-13,-3,7,10,0,0,Math.PI*2);hx.fill();
+  hx.beginPath();hx.ellipse(13,-3,7,10,0,0,Math.PI*2);hx.fill();
+  hx.strokeStyle="#03122e";hx.lineWidth=4;
+  hx.beginPath();hx.arc(0,8,11,.15,Math.PI-.15);hx.stroke();
+  hx.restore();
+}
+
+function frame(ts){
+  if(!last)last=ts;
+  const dt=Math.min((ts-last)/1000,.035);
+  last=ts;update(dt);render();drawHero();requestAnimationFrame(frame);
+}
+
+$("minus").onclick=()=>{$("count").textContent=botCount=Math.max(1,botCount-1)};
+$("plus").onclick=()=>{$("count").textContent=botCount=Math.min(50,botCount+1)};
+$("start").onclick=()=>{ if(window.N2Game&&window.N2Game.send) window.N2Game.send({type:"jumping-madness-start",game:"N2_JUMPING_MADNESS"}); resetGame(); };
+$("pause").onclick=()=>{
+  if(active){paused=!paused;$("pause").textContent=paused?"Verder":"Pauze";}
+};
+$("back").onclick=showMenu;
+
+function hold(id,key){
+  const el=$(id);
+  if(!el)return;
+  el.addEventListener("pointerdown",e=>{
+    e.preventDefault();keys[key]=true;
+    try{el.setPointerCapture(e.pointerId)}catch(_){}
+  });
+  ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>
+    el.addEventListener(ev,()=>keys[key]=false)
+  );
+}
+hold("left","left");hold("right","right");
+
+// Mobiele bediening: tik om te springen, veeg links/rechts om te sturen.
+let touchStart=null, touchMoved=false, touchLastX=0;
+canvas.style.touchAction='none';
+canvas.addEventListener('pointerdown',e=>{
+  if(!active||paused||!player||!player.alive||e.pointerType==='mouse')return;
+  e.preventDefault(); touchStart={x:e.clientX,y:e.clientY,id:e.pointerId};touchLastX=e.clientX;touchMoved=false;
+  try{canvas.setPointerCapture(e.pointerId)}catch(_){}
+});
+canvas.addEventListener('pointermove',e=>{
+  if(!touchStart||e.pointerId!==touchStart.id)return;
+  const dx=e.clientX-touchLastX; touchLastX=e.clientX;
+  if(Math.abs(e.clientX-touchStart.x)>12)touchMoved=true;
+  if(touchMoved){keys.left=dx< -1;keys.right=dx>1;}
+});
+function finishTouch(e){
+  if(!touchStart||e.pointerId!==touchStart.id)return;
+  const moved=touchMoved,dy=Math.abs(e.clientY-touchStart.y);
+  touchStart=null;keys.left=false;keys.right=false;
+  if(!moved&&dy<24&&active&&!paused&&player&&player.alive)jump(player,false);
+}
+canvas.addEventListener('pointerup',finishTouch);canvas.addEventListener('pointercancel',finishTouch);
+
+const jumpBtn=$("jump");
+if(jumpBtn){
+  jumpBtn.addEventListener("pointerdown",e=>{
+    e.preventDefault();
+    if(active&&!paused&&player&&player.alive)jump(player,false);
+  });
+}
+
+addEventListener("keydown",e=>{
+  if(["ArrowLeft","ArrowRight","ArrowUp"," "].includes(e.key))e.preventDefault();
+  keys[e.key]=true;
+  if((e.code==="Space"||e.key==="ArrowUp")&&!e.repeat&&active&&!paused&&player&&player.alive){
+    jump(player,false);
+  }
+  if(e.key==="Escape"&&active){
+    paused=!paused;$("pause").textContent=paused?"Verder":"Pauze";
+  }
+});
+addEventListener("keyup",e=>keys[e.key]=false);
+addEventListener("blur",()=>{keys={}});
+
+setTheme(0,false);
+drawHero();render();requestAnimationFrame(frame);
+});
+</script>
+</body>
+</html>
